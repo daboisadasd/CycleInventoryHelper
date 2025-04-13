@@ -22,6 +22,7 @@
 import argparse
 import uuid
 import json
+import ast
 inventoryJsonString = ""
 outputFilePath = ""
 defaultPort = 27017
@@ -74,7 +75,6 @@ def parseDurability(item, itemObject):
     else:
         itemObject.Durability = -1
 def parseModData(item, itemObject):
-
     if item.find("moddatA") != -1:               #todo add moddata parsing
         index = item.find("moddata:")
         modData = item[index:].split(":")
@@ -136,6 +136,11 @@ class CycleObject:
         self.InsuranceOwnerPlayfabID = InsuranceOwnerPlayfabId
         self.InsuredAttachmentID = InsuredAttachmentId
         self.Origin = Origin if Origin is not None else {"t": "", "p": "", "g": ""}
+    def convertmodtoCycleString(self):
+        return "{" + str(self.ModData) + "}"
+    def convertRolledPerkstoCycleString(self):
+        print("RolledPerks:")
+        
 def parseItemString(itemString):
     try:
         items = itemString.split("+")
@@ -169,8 +174,8 @@ def parseItemString(itemString):
                 print(f"SecondaryVanityID: {itemObject.SecondaryVanityID}")
                 print(f"Amount: {itemObject.Amount}")
                 print(f"Durability: {itemObject.Durability}")
-                print(f"ModData: {itemObject.ModData}")
-                print(f"RolledPerks: {itemObject.RolledPerks}")
+                print(f"ModData: {itemObject.ModData}")             #todo add moddata parsing
+                print(f"RolledPerks: {itemObject.RolledPerks}")     #todo add rolled perks parsing
                 print(f"Insurance: {itemObject.Insurance}")
                 print(f"InsuranceOwnerPlayfabID: {itemObject.InsuranceOwnerPlayfabID}")
                 print(f"InsuredAttachmentID: {itemObject.InsuredAttachmentID}")
@@ -178,29 +183,102 @@ def parseItemString(itemString):
     except (IndexError, ValueError) as e:
         print(f"Error parsing item string '{itemString}': {e}")
         return None, None, None
-def convertCycleObjectToJson(itemObject):
-
+def try_parse_inventory(raw: str):
     try:
-        itemJson = {
+        parsed = json.loads(raw)
+        if isinstance(parsed, list):
+            return parsed
+        elif isinstance(parsed, dict):
+            return [parsed]
+        else:
+            return []
+    except Exception as e:
+        print(f"[!] Failed to parse inventory: {e}")
+        return []
+
+
+def convertCycleObjectToJson(itemObject):
+    try:
+        return {
             "itemId": itemObject.ItemID,
             "baseItemId": itemObject.BaseItemID,
-            "primaryVanityId": itemObject.PrimaryVanityID,
-            "secondaryVanityId": itemObject.SecondaryVanityID,
-            "amount": itemObject.Amount,
-            "durability": itemObject.Durability,
-            "modData": itemObject.ModData,
-            "rolledPerks": itemObject.RolledPerks,
+            "primaryVanityId": int(itemObject.PrimaryVanityID),
+            "secondaryVanityId": int(itemObject.SecondaryVanityID),
+            "amount": int(itemObject.Amount),
+            "durability": int(itemObject.Durability),
+            "modData": {"m": []},
+            "rolledPerks": [],
             "insurance": itemObject.Insurance,
             "insuranceOwnerPlayfabId": itemObject.InsuranceOwnerPlayfabID,
             "insuredAttachmentId": itemObject.InsuredAttachmentID,
-            "origin": itemObject.Origin
+            "origin": {"t": "", "p": "", "g": ""}
         }
-        itemJson = json.dumps(itemJson)
+    except Exception as e:
+        print(f"[!] Error in convertCycleObjectToJson: {e}")
+        return None
+
+def main():
+    global inventoryJsonString, ObjectArray
+
+    # Load existing inventory JSON (from file or direct input)
+    existing_inventory = []
+    if inventoryJsonString.strip():
+        existing_inventory = try_parse_inventory(inventoryJsonString.strip())
+        if not isinstance(existing_inventory, list):
+            print("[!] Warning: existing inventory input is not a list. Skipping merge.")
+            existing_inventory = []
+
+    # Parse new items from --items string
+    parseItemString(items)
+
+    # Convert new CycleObjects to JSON-ready dicts
+    new_items = []
+    for obj in ObjectArray:
+        item_dict = convertCycleObjectToJson(obj)
+        if item_dict:
+            new_items.append(item_dict)
+
+    # Merge inventories
+    final_inventory = existing_inventory + new_items
+
+    # Output merged JSON
+    final_json = json.dumps(final_inventory)
+
+    if outputFilePath:
+        with open(outputFilePath, 'w') as f:
+            f.write(final_json)
+            print(f"Inventory JSON written to {outputFilePath}")
+    else:
+        print("\nFinal Inventory JSON:")
+        print(final_json)
+
+
+
+def sconvertCycleObjectToJson(itemObject):
+    
+    try:
+        #Still need to add rolled perks and moddata parsing
+        itemObject.ModData = "{\"m\": []}"
+        itemObject.RolledPerks = "[]"
+        itemObject.Origin = "{\"t\": \"\", \"p\": \"\", \"g\": \"\"}"
+        itemJson = "{\"itemId\": \""+ itemObject.ItemID+"\"," + \
+            "\"baseItemId\": \""+  str(itemObject.BaseItemID)+"," + \
+            "\"primaryVanityId\":" + str(itemObject.PrimaryVanityID)+"," + \
+            "\"secondaryVanityId\":" +str(itemObject.SecondaryVanityID)+"," + \
+            "\"amount\":" + str(itemObject.Amount)+"," + \
+            "\"durability\":" + str(itemObject.Durability)+"," + \
+            "\"modData\":" + itemObject.ModData+"\"," + \
+            "\"rolledPerks\":"+  itemObject.RolledPerks+"\"," + \
+            "\"insurance\":" + itemObject.Insurance+"\"," + \
+            "\"insuranceOwnerPlayfabId\":" + itemObject.InsuranceOwnerPlayfabID+"\"," + \
+            "\"insuredAttachmentId\":" + itemObject.InsuredAttachmentID+"\"," + \
+            "\"origin\":" + itemObject.Origin+"\"}"
+        print(f"Item JSON: {itemJson}")
         return itemJson
     except Exception as e:
         print(f"Error converting CycleObject to JSON: {e}")
         return None
-def main():
+def smain():
     global inventoryJsonString, ObjectArray
     parseItemString(items)
     for x in ObjectArray:
@@ -216,7 +294,6 @@ def main():
     else:
         print("\nFinal Inventory JSON:")
         print(inventoryJsonString)
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inventory modifier")
     parser.add_argument("-i", "--inventory", help="Inventory JSON string with [] brackets")
