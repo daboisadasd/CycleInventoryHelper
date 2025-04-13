@@ -42,25 +42,25 @@ class CycleObject:
 def parseItemString(itemString):
     items = itemString.split("+")
     for item in items:
-        item = item.strip().lower()
-        if not item or ":" not in item:
-            print(f"[!] Skipping invalid item string: '{item}'")
+        item = item.strip()
+        if not item:
             continue
 
-        baseItemId = item.split(":")[0]
-        obj = CycleObject(BaseItemId=baseItemId)
-
-        obj.ItemID = safe_split(item, "itemid:") or obj.ItemID
-        obj.PrimaryVanityID = safe_split(item, "primaryvanityid:", default=0)
-        obj.SecondaryVanityID = safe_split(item, "secondaryvanityid:", default=0)
-        obj.Amount = safe_split(item, "amount:", default=1)
-        obj.Durability = safe_split(item, "durability:", default=-1)
-        obj.Insurance = safe_split(item, "insurance:", default="None")
-        obj.InsuranceOwnerPlayfabID = safe_split(item, "insuranceownerplayfabid:", default="")
-        obj.InsuredAttachmentID = safe_split(item, "insuredattachmentid:", default="")
-        obj.ModData = {"m": []}
-        obj.RolledPerks = []
-        obj.Origin = {"t": "", "p": "", "g": ""}
+        if ":" not in item:
+            # Treat as plain baseItemId with default values
+            obj = CycleObject(BaseItemId=item)
+        else:
+            baseItemId = item.split(":")[0].lower()
+            obj = CycleObject(BaseItemId=baseItemId)
+            item = item.lower()
+            obj.ItemID = safe_split(item, "itemid:") or obj.ItemID
+            obj.PrimaryVanityID = safe_split(item, "primaryvanityid:", default=0)
+            obj.SecondaryVanityID = safe_split(item, "secondaryvanityid:", default=0)
+            obj.Amount = safe_split(item, "amount:", default=1)
+            obj.Durability = safe_split(item, "durability:", default=-1)
+            obj.Insurance = safe_split(item, "insurance:", default="None")
+            obj.InsuranceOwnerPlayfabID = safe_split(item, "insuranceownerplayfabid:", default="")
+            obj.InsuredAttachmentID = safe_split(item, "insuredattachmentid:", default="")
 
         ObjectArray.append(obj)
 
@@ -131,7 +131,7 @@ def convertCycleObjectToJson(obj):
         print(f"[!] Error converting item to JSON: {e}")
         return None
 
-def search_known_objects(term, known_file="known_objects.list"):
+def search_known_objects(term, known_file="best_known_objects.list"):
     if not os.path.exists(known_file):
         print(f"[!] Known objects file not found: {known_file}")
         sys.exit(1)
@@ -177,7 +177,7 @@ def main():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inventory Modifier")
     parser.add_argument("-i", "--inventory", help="Inventory JSON string with [] brackets")
-    parser.add_argument("--items", help="Items to add, + separated (e.g., Light:amount=10+Helmet:durability=500)")
+    parser.add_argument("--items", help="Items to add, + separated (e.g., Light:amount=10+Helmet:durability=500 or just Light+Fabric)")
     parser.add_argument("--items-file", help="Path to file containing items to add")
     parser.add_argument("--output", help="Output file path. If not provided, prints to console")
     parser.add_argument("--input", help="Load inventory JSON from file")
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     parser.add_argument("--collection", default="PlayFabUserData", help="MongoDB collection name")
     parser.add_argument("--record", default="Inventory", help="Document key that holds inventory data")
     parser.add_argument("--mongo-save-file", help="File path to save raw inventory JSON from MongoDB")
-    parser.add_argument("--search", help="Search known_objects.list for matching entries")
+    parser.add_argument("--search", help="Search best_known_objects.list for matching entries")
 
     args = parser.parse_args()
 
