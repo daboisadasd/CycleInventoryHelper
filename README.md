@@ -1,34 +1,92 @@
 # 🛠️ Cycle Inventory Helper
 
-A simple command-line utility for generating and modifying inventory item data in **The Cycle Frontier: Reborn**.
+A command-line tool to create, merge, and manage inventory JSON data for **The Cycle Frontier: Reborn**.
 
 > ⚠️ **Early Beta Notice:**  
-> This tool is in early beta. Expect bugs, missing features, and things that don’t work quite right yet. Feel free to contribute or report issues.
+> This tool is in active development. Expect missing features, bugs, and breaking behavior. Feedback and contributions are welcome!
 
 ---
 
-## 💡 What It Does
+## 💡 Features
 
-- Parses item strings into proper inventory JSON format.
-- Supports adding new items with custom properties like durability, vanity IDs, mod data, etc.
-- Outputs to either console or a specified file.
-- Useful for testing, modding, and debugging inventory systems.
+- ✅ Convert simple item strings like `Light:durability:8` into full item JSON objects.
+- ✅ Merge new items into an existing inventory (`--input` or `--inventory`).
+- ✅ Outputs clean, formatted JSON to a file or directly to the console.
+- ✅ Supports custom fields:
+  - `itemid`, `amount`, `durability`, `vanityId`, `modData`, `insurance`, etc.
+- ✅ Auto-generates UUIDs for `itemId` when not provided.
 
 ---
 
-## 🚀 How to Use
+## 🚀 Usage
 
-### 📦 Installation
+### 🔧 Basic Item Generation
 
-Clone or download the repo and just run the script with Python 3.x:
-> ⚠️ **Early Beta Notice:**  
-> The tool requires that when adding an item, it has at least one field. So "Light" wont work but "Light:durability:-1" will
-```bash
+```
 python Cycle.py --items "Light:itemid:myId123:amount:50+Helmet:durability:200" --output inventory.json
 ```
-The script can add items to your inventory too!
-```bash
-python Cycle.py -i [{"itemId":"51c6d9d2-1bb5-4a9f-9d2b-1de0897732ee","baseItemId":"Light","primaryVanityId":0,"secondaryVanityId":0,"amount":234,"durability":-1,"modData":{"m":[]},"rolledPerks":[],"insurance":"","insuranceOwnerPlayfabId":"","insuredAttachmentId":"","origin":{"t":"","p":"","g":""}}] --items "Light:durability:-1"
+
+> ⚠️ You must provide **at least one field** with each item.  
+> `Light` alone will not work — use something like `Light:durability:-1`.
+
+---
+
+### 🔁 Merging with Existing Inventory
+
+You can merge new items into a previously saved inventory.
+
+#### 🔹 From a direct JSON string:
+```
+python Cycle.py --inventory '[{"itemId":"...","baseItemId":"Light",...}]' --items "Light:durability:-1"
+```
+
+#### 🔹 From a JSON file:
+```
+python Cycle.py --input out.json --items "Helmet:amount:2+Light:durability:5"
+```
+
+Example output:
+```
+Loading inventory from out.json
 
 Final Inventory JSON:
-[{itemId:51c6d9d2-1bb5-4a9f-9d2b-1de0897732ee,baseItemId:Light,primaryVanityId:0,secondaryVanityId:0,amount:234,durability:-1,modData:{m:[]},rolledPerks:[],insurance:,insuranceOwnerPlayfabId:,insuredAttachmentId:,origin:{t:,p:,g:}},{"itemId": "c3a2606c-3c2f-4ceb-9b9d-8aa6b24bc9f0", "baseItemId": "light", "primaryVanityId": 0, "secondaryVanityId": 0, "amount": 1, "durability": "-1", "modData": {"m": []}, "rolledPerks": [], "insurance": "None", "insuranceOwnerPlayfabId": "", "insuredAttachmentId": "", "origin": {"t": "", "p": "", "g": ""}}]
+[
+    {
+        "itemId": "0b4c27e4-...",
+        "baseItemId": "light",
+        ...
+    },
+    {
+        "itemId": "834d12c0-...",
+        "baseItemId": "helmet",
+        ...
+    }
+]
+```
+
+---
+
+## 📄 Input Format for `--items`
+
+You can chain multiple items with `+`, and each property with `:`:
+
+```
+"Light:amount:3:durability:-1+Helmet:amount:1"
+```
+
+Each entry will become a full JSON object with the default structure auto-filled where needed.
+
+---
+
+## 🧪 Dev Notes
+
+- Written in Python 3.8+
+- No external libraries required
+- Designed for testing and modifying inventories in Cycle Frontier Reborn
+
+---
+
+## 🧑‍💻 Contributing
+
+PRs welcome!  
+If you want to help with `modData` or `rolledPerks` support, message me on Discord: `x_ref#0`
