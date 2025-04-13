@@ -81,6 +81,7 @@ Each entry will become a full JSON object with the default structure auto-filled
 ## 🧪 Dev Notes
 
 - Written in Python 3.8+
+- I have a very barebones list of known items right now, you can use the custom unique base finder script to find new ones!
 - No external libraries required
 - Designed for testing and modifying inventories in Cycle Frontier Reborn
 
