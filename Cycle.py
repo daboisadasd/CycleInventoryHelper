@@ -22,7 +22,6 @@
 import argparse
 import uuid
 import json
-import ast
 inventoryJsonString = ""
 outputFilePath = ""
 defaultPort = 27017
