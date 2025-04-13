@@ -1,3 +1,0 @@
-[{"itemId": "0b4c27e4-8340-4a5c-96b1-79d7f857bf6e", "baseItemId": "light", "primaryVanityId": 0, "secondaryVanityId": 0, "amount": 1, "durability": 8, "modData": {"m": []}, "rolledPerks": [], "insurance": "None", "insuranceOwnerPlayfabId": "", "insuredAttachmentId": "", "origin": {"t": "", "p": "", "g": ""}}, {"itemId": "834d12c0-495d-469f-916a-254dcf0e1d6c", "baseItemId": "helmet", "primaryVanityId": 0, "secondaryVanityId": 0, "amount": 2, "durability": -1, "modData": {"m": []}, "rolledPerks": [], "insurance": "None", "insuranceOwnerPlayfabId": "", "insuredAttachmentId": "", "origin": {"t": "", "p": "", "g": ""}}]
-
-#An example inventory entry
