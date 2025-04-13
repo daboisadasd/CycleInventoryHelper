@@ -20,7 +20,7 @@ def load_known_objects(filename="known_objects.list"):
             print(f"[!] Failed to load existing known objects: {e}")
     return set()
 
-def fetch_inventory_from_mongo(uri, db_name, collection_name, inventory_key):
+def fetch_inventory_from_mongo(uri: str="mongodb://localhost:27017", db_name: str="ProspectDb", collection_name: str="PlayFabUserData", inventory_key: str="Inventory"):
     try:
         print(f"[DEBUG] Connecting to MongoDB at {uri}...")
         client = MongoClient(uri)
