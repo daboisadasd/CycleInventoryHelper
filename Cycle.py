@@ -17,7 +17,7 @@
       "p": "",
       "g": ""
     }
-  }
+  },{"itemId": "834d12c0-495d-469f-916a-254dcf0e1d6c", "baseItemId": "helmet", "primaryVanityId": 0, "secondaryVanityId": 0, "amount": 2, "durability": -1, "modData": {"m": []}, "rolledPerks": [], "insurance": "None", "insuranceOwnerPlayfabId": "", "insuredAttachmentId": "", "origin": {"t": "", "p": "", "g": ""}}
 """
 import argparse
 import uuid
@@ -303,7 +303,6 @@ if __name__ == "__main__":
     parser.add_argument("-a", "--address", help="Optional server address (e.g., 127.0.0.1 or localhost:6680)")
     parser.add_argument("-p", "--port", type=int, help="Port of the server to connect to. Default is 27017")
     parser.add_argument("-v", "--verbose", action="store_true", help="Enable verbose output")
-
     args = parser.parse_args()
 
     # Global values
