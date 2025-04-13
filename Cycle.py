@@ -50,7 +50,7 @@ def parseItemString(itemString):
             # Treat as plain baseItemId with default values
             obj = CycleObject(BaseItemId=item)
         else:
-            baseItemId = item.split(":")[0].lower()
+            baseItemId = item.split(":")[0]
             obj = CycleObject(BaseItemId=baseItemId)
             item = item.lower()
             obj.ItemID = safe_split(item, "itemid:") or obj.ItemID
@@ -133,7 +133,7 @@ def convertCycleObjectToJson(obj):
         print(f"[!] Error converting item to JSON: {e}")
         return None
 
-def search_known_objects(term, known_file="best_known_objects.list"):
+def search_known_objects(term, known_file="known_objects.list"):
     if not os.path.exists(known_file):
         print(f"[!] Known objects file not found: {known_file}")
         sys.exit(1)
@@ -177,10 +177,23 @@ def main():
             print("\nFinal Inventory JSON:")
             print(final_json)
         else:
-            final_json = json.dumps(final_inventory, separators=(",", ":"))
             print(final_json.strip())
 
+    # Optional MongoDB update
+    if args.mongo and args.replace_mongo:
+        try:
+            client = MongoClient(f"mongodb://{address}:{defaultPort}")
+            collection = client[args.db][args.collection]
+            result = collection.update_one({"Key": args.record}, {"$set": {"Value": final_json}}, upsert=True)
+            if result.modified_count:
+                print("[+] MongoDB inventory updated successfully.")
+            else:
+                print("[!] No document was modified. It may have already been up-to-date or not exist.")
+        except Exception as e:
+            print(f"[!] Failed to update MongoDB: {e}")
+
 if __name__ == "__main__":
+
     parser = argparse.ArgumentParser(description="Inventory Modifier")
     parser.add_argument("-i", "--inventory", help="Path to inventory JSON file")
     parser.add_argument("--items", help="Items to add, + separated (e.g., Light:amount=10+Helmet:durability=500 or just Light+Fabric)")
@@ -195,8 +208,8 @@ if __name__ == "__main__":
     parser.add_argument("--collection", default="PlayFabUserData", help="MongoDB collection name")
     parser.add_argument("--record", default="Inventory", help="Document key that holds inventory data")
     parser.add_argument("--mongo-save-file", help="File path to save raw inventory JSON from MongoDB")
-    parser.add_argument("--search", help="Search best_known_objects.list for matching entries")
-
+    parser.add_argument("--search", help="Search known_objects.list for matching entries")
+    parser.add_argument("--replace-mongo", action="store_true", help="Replace existing inventory in MongoDB with new one")
     args = parser.parse_args()
 
     verbose = args.verbose
