@@ -69,8 +69,10 @@ def parseItemString(itemString):
 
 def try_parse_inventory(raw):
     try:
-        parsed = json.loads(raw)
-        return parsed if isinstance(parsed, list) else [parsed]
+        with open(raw, 'r') as f:
+            content = f.read().strip()
+            parsed = json.loads(content)
+            return parsed if isinstance(parsed, list) else [parsed]
     except Exception as e:
         print(f"[!] Failed to parse inventory JSON: {e}")
         return []
@@ -168,15 +170,19 @@ def main():
 
     if outputFilePath:
         with open(outputFilePath, 'w') as f:
-            f.write(final_json)
+            f.write(final_json.strip())
             print(f"[+] Inventory written to {outputFilePath}")
     else:
-        print("\nFinal Inventory JSON:")
-        print(final_json)
+        if(verbose):
+            print("\nFinal Inventory JSON:")
+            print(final_json)
+        else:
+            final_json = json.dumps(final_inventory, separators=(",", ":"))
+            print(final_json.strip())
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inventory Modifier")
-    parser.add_argument("-i", "--inventory", help="Inventory JSON string with [] brackets")
+    parser.add_argument("-i", "--inventory", help="Path to inventory JSON file")
     parser.add_argument("--items", help="Items to add, + separated (e.g., Light:amount=10+Helmet:durability=500 or just Light+Fabric)")
     parser.add_argument("--items-file", help="Path to file containing items to add")
     parser.add_argument("--output", help="Output file path. If not provided, prints to console")
