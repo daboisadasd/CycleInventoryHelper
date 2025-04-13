@@ -23,4 +23,4 @@ A simple command-line utility for generating and modifying inventory item data i
 Clone or download the repo and just run the script with Python 3.x:
 
 ```bash
-python Cycle.py --items "Light:itemid:myId123:amount:50+Balls:durability:200" --output inventory.json
+python Cycle.py --items "Light:itemid:myId123:amount:50+Helmet:durability:200" --output inventory.json
