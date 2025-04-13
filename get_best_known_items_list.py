@@ -3,7 +3,7 @@ import json
 
 # Raw GitHub URL
 RAW_URL = "https://raw.githubusercontent.com/daboisadasd/CycleInventoryHelper/main/known_objects.list"
-OUTPUT_FILE = "best_known_objects.list"
+OUTPUT_FILE = "known_objects.list"
 
 def download_known_objects():
     try:
