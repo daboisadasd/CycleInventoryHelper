@@ -3,6 +3,8 @@ import uuid
 import json
 import add_to_known_objects
 from pymongo import MongoClient
+import sys
+import os
 
 # Globals
 inventoryJsonString = ""
@@ -129,8 +131,28 @@ def convertCycleObjectToJson(obj):
         print(f"[!] Error converting item to JSON: {e}")
         return None
 
+def search_known_objects(term, known_file="known_objects.list"):
+    if not os.path.exists(known_file):
+        print(f"[!] Known objects file not found: {known_file}")
+        sys.exit(1)
+
+    with open(known_file, "r") as f:
+        try:
+            known_objects = json.load(f)
+            matches = [item for item in known_objects if term.lower() in item.lower()]
+            if matches:
+                print("[+] Matches:")
+                for match in matches:
+                    print(f" - {match}")
+            else:
+                print("[!] No matches found.")
+            sys.exit(0)
+        except Exception as e:
+            print(f"[!] Error reading known objects file: {e}")
+            sys.exit(1)
+
 def main():
-    global inventoryJsonString, ObjectArray
+    global inventoryJsonString, ObjectArray, items
 
     existing_inventory = []
     if isinstance(inventoryJsonString, str) and inventoryJsonString.strip():
@@ -156,6 +178,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Inventory Modifier")
     parser.add_argument("-i", "--inventory", help="Inventory JSON string with [] brackets")
     parser.add_argument("--items", help="Items to add, + separated (e.g., Light:amount=10+Helmet:durability=500)")
+    parser.add_argument("--items-file", help="Path to file containing items to add")
     parser.add_argument("--output", help="Output file path. If not provided, prints to console")
     parser.add_argument("--input", help="Load inventory JSON from file")
     parser.add_argument("-a", "--address", help="Server address (e.g., localhost or 127.0.0.1:27017)")
@@ -166,10 +189,15 @@ if __name__ == "__main__":
     parser.add_argument("--collection", default="PlayFabUserData", help="MongoDB collection name")
     parser.add_argument("--record", default="Inventory", help="Document key that holds inventory data")
     parser.add_argument("--mongo-save-file", help="File path to save raw inventory JSON from MongoDB")
+    parser.add_argument("--search", help="Search known_objects.list for matching entries")
 
     args = parser.parse_args()
 
     verbose = args.verbose
+
+    if args.search:
+        search_known_objects(args.search)
+
     if args.input:
         with open(args.input, 'r') as f:
             inventoryJsonString = f.read()
@@ -185,7 +213,14 @@ if __name__ == "__main__":
         )
         print("[+] Inventory loaded from MongoDB")
 
-    if args.items:
+    if args.items_file:
+        if os.path.exists(args.items_file):
+            with open(args.items_file, 'r') as f:
+                items = f.read().strip()
+        else:
+            print(f"[!] Items file not found: {args.items_file}")
+            sys.exit(1)
+    elif args.items:
         items = args.items
 
     if args.output:
