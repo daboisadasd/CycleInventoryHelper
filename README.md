@@ -30,7 +30,7 @@ The script can add items to your inventory too!
 ```bash
 python Cycle.py -i [{"itemId":"51c6d9d2-1bb5-4a9f-9d2b-1de0897732ee","baseItemId":"Light","primaryVanityId":0,"secondaryVanityId":0,"amount":234,"durability":-1,"modData":{"m":[]},"rolledPerks":[],"insurance":"","insuranceOwnerPlayfabId":"","insuredAttachmentId":"","origin":{"t":"","p":"","g":""}}] --items "Light:durability:-1"
 
-C:\Users\Dylan\repos\CycleInventoryHelper>python Cycle.py --input out.json --items "Helmet:amount:2+Light:durability:5"
+python Cycle.py --input out.json --items "Helmet:amount:2+Light:durability:5"
 Loading inventory from out.json
 
 Final Inventory JSON:
