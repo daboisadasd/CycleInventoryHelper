@@ -8,7 +8,7 @@
     "modData": {
       "m": []
     },
-    "rolledPerks": [],
+    "rolledPerks":s [],
     "insurance": "",
     "insuranceOwnerPlayfabId": "",
     "insuredAttachmentId": "",
