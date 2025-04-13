@@ -24,3 +24,6 @@ Clone or download the repo and just run the script with Python 3.x:
 
 ```bash
 python Cycle.py --items "Light:itemid:myId123:amount:50+Helmet:durability:200" --output inventory.json
+```
+> ⚠️ **Early Beta Notice:**  
+> The tool requires that when adding an item, it has at least one field. So "Light" wont work but "Light:durability:-1" will
