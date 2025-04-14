@@ -15,6 +15,7 @@ A command-line tool to create, merge, and manage inventory JSON data for **The C
 - ✅ Supports custom fields:
   - `itemid`, `amount`, `durability`, `vanityId`, `modData`, `insurance`, etc.
 - ✅ Auto-generates UUIDs for `itemId` when not provided.
+- ✅ QuestLoop script will automatically update db to set all quests to be completed, except for quests where you must hand something over.
 
 ---
 
