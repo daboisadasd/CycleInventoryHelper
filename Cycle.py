@@ -14,6 +14,7 @@ address = "localhost"
 ObjectArray = []
 items = ""
 verbose = False
+knownItems = []
 
 # Helper class
 def safe_split(s, delimiter=":", index=1, default=None):
@@ -40,6 +41,10 @@ class CycleObject:
         self.Origin = Origin if Origin is not None else {"t": "", "p": "", "g": ""}
 
 def parseItemString(itemString):
+    if os.path.exists(itemString):
+        with open(itemString, 'r') as f:
+            itemString = f.read().strip()
+
     items = itemString.split("+")
     for item in items:
         item = item.strip()
@@ -47,20 +52,19 @@ def parseItemString(itemString):
             continue
 
         if ":" not in item:
-            # Treat as plain baseItemId with default values
             obj = CycleObject(BaseItemId=item)
         else:
             baseItemId = item.split(":")[0]
             obj = CycleObject(BaseItemId=baseItemId)
-            item = item.lower()
-            obj.ItemID = safe_split(item, "itemid:") or obj.ItemID
-            obj.PrimaryVanityID = safe_split(item, "primaryvanityid:", default=0)
-            obj.SecondaryVanityID = safe_split(item, "secondaryvanityid:", default=0)
-            obj.Amount = safe_split(item, "amount:", default=1)
-            obj.Durability = safe_split(item, "durability:", default=-1)
-            obj.Insurance = safe_split(item, "insurance:", default="None")
-            obj.InsuranceOwnerPlayfabID = safe_split(item, "insuranceownerplayfabid:", default="")
-            obj.InsuredAttachmentID = safe_split(item, "insuredattachmentid:", default="")
+            lowered = item.lower()
+            obj.ItemID = safe_split(lowered, "itemid:") or obj.ItemID
+            obj.PrimaryVanityID = safe_split(lowered, "primaryvanityid:", default=0)
+            obj.SecondaryVanityID = safe_split(lowered, "secondaryvanityid:", default=0)
+            obj.Amount = safe_split(lowered, "amount:", default=1)
+            obj.Durability = safe_split(lowered, "durability:", default=-1)
+            obj.Insurance = safe_split(lowered, "insurance:", default="None")
+            obj.InsuranceOwnerPlayfabID = safe_split(lowered, "insuranceownerplayfabid:", default="")
+            obj.InsuredAttachmentID = safe_split(lowered, "insuredattachmentid:", default="")
 
         ObjectArray.append(obj)
 
@@ -69,10 +73,13 @@ def parseItemString(itemString):
 
 def try_parse_inventory(raw):
     try:
-        with open(raw, 'r') as f:
-            content = f.read().strip()
-            parsed = json.loads(content)
-            return parsed if isinstance(parsed, list) else [parsed]
+        if raw.strip().lower() == "mongo":
+            return fetch_inventory_from_mongo()
+        elif os.path.exists(raw):
+            with open(raw, 'r') as f:
+                raw = f.read()
+        parsed = json.loads(raw.strip())
+        return parsed if isinstance(parsed, list) else [parsed]
     except Exception as e:
         print(f"[!] Failed to parse inventory JSON: {e}")
         return []
@@ -136,7 +143,7 @@ def convertCycleObjectToJson(obj):
 def search_known_objects(term, known_file="known_objects.list"):
     if not os.path.exists(known_file):
         print(f"[!] Known objects file not found: {known_file}")
-        sys.exit(1)
+        return -1
 
     with open(known_file, "r") as f:
         try:
@@ -148,52 +155,81 @@ def search_known_objects(term, known_file="known_objects.list"):
                     print(f" - {match}")
             else:
                 print("[!] No matches found.")
-            sys.exit(0)
+                return -1
         except Exception as e:
             print(f"[!] Error reading known objects file: {e}")
-            sys.exit(1)
+            return -1
 
 def main():
-    global inventoryJsonString, ObjectArray, items
+    global ObjectArray, items, knownItems
 
-    existing_inventory = []
-    if isinstance(inventoryJsonString, str) and inventoryJsonString.strip():
-        existing_inventory = try_parse_inventory(inventoryJsonString.strip())
-    elif isinstance(inventoryJsonString, list):
-        existing_inventory = inventoryJsonString
+    # Load existing inventory
+    if args.input:
+        if args.input.strip().lower() == "mongo":
+            inventory = fetch_inventory_from_mongo(
+                uri=f"mongodb://{address}:{defaultPort}",
+                db=args.db,
+                collection=args.collection,
+                key=args.record,
+                save_to_file=args.mongo_save_file
+            )
+        elif os.path.exists(args.input):
+            with open(args.input, 'r') as f:
+                inventory = json.load(f)
+        else:
+            try:
+                inventory = json.loads(args.input.strip())
+            except Exception as e:
+                print(f"[!] Failed to parse input: {e}")
+                return
+    else:
+        inventory = []
 
-    parseItemString(items)
+    # Parse new items
+    raw_items = args.items
+    if raw_items and os.path.exists(raw_items):
+        with open(raw_items, 'r') as f:
+            raw_items = f.read().strip()
+
+    if raw_items:
+        parseItemString(raw_items)
+
     new_items = [convertCycleObjectToJson(obj) for obj in ObjectArray if convertCycleObjectToJson(obj)]
 
-    final_inventory = existing_inventory + new_items
+    if not args.no_check_item_id:
+        for dic in new_items:
+            if not any(dic["baseItemId"].lower() in known.lower() for known in knownItems):
+                if search_known_objects(dic["baseItemId"]) != -1:
+                    print("Perhaps you meant one of the above?")
+                print("[!] Item id not in known list. Use --no-check-item-id to bypass this check.")
+                return -1
+
+    final_inventory = inventory + new_items
     final_json = json.dumps(final_inventory, indent=2)
 
-    if outputFilePath:
-        with open(outputFilePath, 'w') as f:
-            f.write(final_json.strip())
-            print(f"[+] Inventory written to {outputFilePath}")
-    else:
-        if(verbose):
-            print("\nFinal Inventory JSON:")
-            print(final_json)
+    # Handle output
+    if args.output:
+        if args.output.strip().lower() == "mongo":
+            try:
+                client = MongoClient(f"mongodb://{address}:{defaultPort}")
+                collection = client[args.db][args.collection]
+                result = collection.update_one({"Key": args.record}, {"$set": {"Value": final_json}}, upsert=True)
+                if result.modified_count:
+                    print("[+] MongoDB inventory updated successfully.")
+                else:
+                    print("[!] No document was modified.")
+            except Exception as e:
+                print(f"[!] Failed to update MongoDB: {e}")
         else:
-            print(final_json.strip())
+            with open(args.output, 'w') as f:
+                f.write(final_json)
+                print(f"[+] Inventory written to {args.output}")
+    else:
+        print("\nFinal Inventory JSON:")
+        print(final_json if verbose else final_json.replace(" ", "").replace("\n", ""))
 
-    # Optional MongoDB update
-    if args.mongo and args.replace_mongo:
-        try:
-            client = MongoClient(f"mongodb://{address}:{defaultPort}")
-            collection = client[args.db][args.collection]
-            result = collection.update_one({"Key": args.record}, {"$set": {"Value": final_json}}, upsert=True)
-            if result.modified_count:
-                print("[+] MongoDB inventory updated successfully.")
-            else:
-                print("[!] No document was modified. It may have already been up-to-date or not exist.")
-        except Exception as e:
-            print(f"[!] Failed to update MongoDB: {e}")
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Inventory Modifier")
     parser.add_argument("-i", "--inventory", help="Path to inventory JSON file")
     parser.add_argument("--items", help="Items to add, + separated (e.g., Light:amount=10+Helmet:durability=500 or just Light+Fabric)")
@@ -210,6 +246,8 @@ if __name__ == "__main__":
     parser.add_argument("--mongo-save-file", help="File path to save raw inventory JSON from MongoDB")
     parser.add_argument("--search", help="Search known_objects.list for matching entries")
     parser.add_argument("--replace-mongo", action="store_true", help="Replace existing inventory in MongoDB with new one")
+    parser.add_argument("--no-check-item-id", action="store_true", help="Disable verifying that a baseItemId is in the known list before adding it")
+    parser.add_argument("--good-item-ids", help="Path to file that contains known valid baseItemIds")
     args = parser.parse_args()
 
     verbose = args.verbose
@@ -217,20 +255,14 @@ if __name__ == "__main__":
     if args.search:
         search_known_objects(args.search)
 
-    if args.input:
-        with open(args.input, 'r') as f:
-            inventoryJsonString = f.read()
-    elif args.inventory:
-        inventoryJsonString = args.inventory
-    elif args.mongo:
-        inventoryJsonString = fetch_inventory_from_mongo(
-            uri=f"mongodb://{address}:{defaultPort}",
-            db=args.db,
-            collection=args.collection,
-            key=args.record,
-            save_to_file=args.mongo_save_file
-        )
-        print("[+] Inventory loaded from MongoDB")
+    if args.good_item_ids:
+        if os.path.exists(args.good_item_ids):
+            with open(args.good_item_ids, 'r') as f:
+                knownItems = json.load(f)
+        else:
+            print(f"[!] Known item ID list file not found: {args.good_item_ids}")
+            sys.exit(1)
+
 
     if args.items_file:
         if os.path.exists(args.items_file):
