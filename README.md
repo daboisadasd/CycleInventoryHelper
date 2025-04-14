@@ -16,6 +16,7 @@ A command-line tool to create, merge, and manage inventory JSON data for **The C
   - `itemid`, `amount`, `durability`, `vanityId`, `modData`, `insurance`, etc.
 - ✅ Auto-generates UUIDs for `itemId` when not provided.
 - ✅ QuestLoop script will automatically update db to set all tasks in your current quests to be completed, except for quests where you must hand something over.
+- ✅ You can directly connect to your local prospectdb via this script to update and retrieve values.
 
 ---
 
