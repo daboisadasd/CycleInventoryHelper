@@ -30,9 +30,9 @@ python Cycle.py --items "Light:itemid:myId123:amount:50+Helmet:durability:200" -
 > ⚠️ You must provide **at least one field** with each item.  
 > `Light` alone will not work — use something like `Light:durability:-1`.
 ---
-#I have provided a list of good id's, these all resolve to something in game. If your item isn't in there, it most likely follows the convention of ItemName like PrintResin PureFocusCrystal
-#If you have an item that is not in the list, you can use the add_to_known_objects.py to save the unique id's in your db locally,
-#If you're farther ahead in the game than I am and you have many unique Id's not found in my list, feel free to open a pr and merge them, or send me a message with your id's and I'll do it for you
+# I have provided a list of good id's, these all resolve to something in game. If your item isn't in there, it most likely follows the convention of ItemName like PrintResin PureFocusCrystal
+# If you have an item that is not in the list, you can use the add_to_known_objects.py to save the unique id's in your db locally,
+# If you're farther ahead in the game than I am and you have many unique Id's not found in my list, feel free to open a pr and merge them, or send me a message with your id's and I'll do it for you
 ---
 
 ### 🔁 Merging with Existing Inventory
