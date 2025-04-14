@@ -1,4 +1,4 @@
-# 🛠️ Cycle Inventory Helper
+`# 🛠️ Cycle Inventory Helper
 
 A command-line tool to create, merge, and manage inventory JSON data for **The Cycle Frontier: Reborn**.
 
