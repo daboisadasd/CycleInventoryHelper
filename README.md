@@ -26,9 +26,6 @@ A command-line tool to create, merge, and manage inventory JSON data for **The C
 ```
 python Cycle.py --items "Light:itemid:myId123:amount:50+Helmet:durability:200" --output inventory.json
 ```
-
-> ⚠️ You must provide **at least one field** with each item.  
-> `Light` alone will not work — use something like `Light:durability:-1`.
 ---
 ### I have provided a list of good id's, these all resolve to something in game. If your item isn't in there, it most likely follows the convention of ItemName like PrintResin or PureFocusCrystal
 ### If you have an item that is not in the list, you can use the add_to_known_objects.py to save the unique id's in your db locally,
